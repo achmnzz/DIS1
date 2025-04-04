@@ -4,13 +4,13 @@
 
 #define TAM 10
 
-void printa_matrix(int matrix[][TAM])
+void printa_matrix(float matrix[][TAM])
 {
     for(int i = 0; i < TAM; i++)
     {
         for(int j = 0; j < TAM; j++)
         {
-            printf("%5d", matrix[i][j]);
+            printf("%5.1f", matrix[i][j]);
         }
         printf("\n");
     }
@@ -19,7 +19,7 @@ void printa_matrix(int matrix[][TAM])
 
 int main()
 {
-    int matrix_a[TAM][TAM], matrix_b[TAM][TAM];
+    float matrix_a[TAM][TAM], matrix_b[TAM][TAM];
 
     for(int i =  0; i < TAM; i++)
     {
