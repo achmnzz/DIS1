@@ -1,6 +1,6 @@
 #include <stdlib.h>
 #include <stdio.h>
-#include <cblas.h>
+#include "cblas.h"
 
 #define TAM 10
 
