@@ -1,8 +1,2 @@
 /.vscode
-<<<<<<< HEAD
-/saida
-/*.exe
-/build
-=======
 /out
->>>>>>> d2c616f (Primeiro uso da cblas!)

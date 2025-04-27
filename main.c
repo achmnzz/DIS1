@@ -4,53 +4,66 @@
 
 #define M 2
 #define N 2
+#define de_um_ate_ 3
 
-void printa_matrix(float matrix[M*N])
+void inicializa_(float matrix_a[M*N], float matrix_b[M*N], float vetor_[M])
 {
-    for(int i = 0; i < M; i++)
+    inicializa_valores(M, N, matrix_a);
+    inicializa_valores(M, N, matrix_b);
+    inicializa_valores(1, M, vetor_);
+}
+
+void inicializa_valores(int linhas, int colunas, float matrix[linhas*colunas])
+{
+     for(int i =  0; i < linhas; i++)
+     {
+        for(int j = 0; j < colunas; j++)
+         {
+            matrix[i*colunas+j] = (float) ((rand() % de_um_ate_)+ 1);
+         }
+     }
+}
+
+void printa_(int linhas, int colunas, float matrix[linhas*colunas])
+{
+    for(int i = 0; i < linhas; i++)
     {
-        for(int j = 0; j < N; j++)
+        for(int j = 0; j < colunas; j++)
         {
-            printf("%10.1f", matrix[i*M+j]);
+            printf("%10.1f", matrix[i*linhas+j]);
         }
         printf("\n");
     }
     printf("\n\n");
 }
 
-void transposta(int linhas, int colunas, float matrix[linhas*colunas], float transp[colunas*linhas])
-{
-    for(int j = 0; j < colunas; j++)
-    {
-        for(int i =  0; i < linhas; i++)
-        {
-            transp[i*linhas+j] = matrix[j*linhas+i];
-        }
-    }
-}
-
-
 int main()
 {
-    float A[M*N], B[M*N], A_t[N*M], B_t[N*M], result[M*N];
+    float A[M*N], B[M*N], result[M*N] = {0}, vetor[M], vetor_result[M] = {0};
 
-    for(int i =  0; i < M; i++)
-    {
-        for(int j = 0; j < N; j++)
-        {
-            A[i*M+j] = (float) (rand() % 3 + 1);
-            B[i*M+j] = (float) (rand() % 3 + 1);
-        }
-    }
-
+    inicializa_(A, B, vetor);
+   
     printf("A: \n");
-    printa_matrix(A);
+    printa_(M, N, A);
     printf("B: \n");
-    printa_matrix(B);
+    printa_(M, N, B);
+    printf("Vetor: \n");
+    printa_(1, M, vetor);
 
+    //result = A*B
     cblas_sgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans, M, N, M, 1.0f, A, M, B, N, 0.0f, result, N);
-    printf("Result: \n");
-    printa_matrix(result);
+    printf("Resultado de A*B: \n");
+    printa_(M, N, result);
+
+    //vetor_result = A*vetor
+    cblas_sgemv(CblasRowMajor, CblasNoTrans, M, N, 1.0f, A, N, vetor, 1, 0.0f, vetor_result, 1);
+    printf("Resultado de A*vetor: \n");
+    printa_(1, M, vetor_result);
+
+    //vetor_result = vetor*A
+    cblas_sgemv(CblasRowMajor, CblasTrans, M, N, 1.0f, A, N, vetor, 1, 0.0f, vetor_result, 1);
+    printf("Resultado de vetor*A: \n");
+    printa_(1, M, vetor_result);
 
     return (0);
 }
