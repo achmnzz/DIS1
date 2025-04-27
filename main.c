@@ -2,36 +2,55 @@
 #include <stdio.h>
 #include "cblas.h"
 
-#define TAM 10
+#define M 2
+#define N 2
 
-void printa_matrix(float matrix[][TAM])
+void printa_matrix(float matrix[M*N])
 {
-    for(int i = 0; i < TAM; i++)
+    for(int i = 0; i < M; i++)
     {
-        for(int j = 0; j < TAM; j++)
+        for(int j = 0; j < N; j++)
         {
-            printf("%5.1f", matrix[i][j]);
+            printf("%10.1f", matrix[i*M+j]);
         }
         printf("\n");
     }
     printf("\n\n");
 }
 
+void transposta(int linhas, int colunas, float matrix[linhas*colunas], float transp[colunas*linhas])
+{
+    for(int j = 0; j < colunas; j++)
+    {
+        for(int i =  0; i < linhas; i++)
+        {
+            transp[i*linhas+j] = matrix[j*linhas+i];
+        }
+    }
+}
+
+
 int main()
 {
-    float matrix_a[TAM][TAM], matrix_b[TAM][TAM];
+    float A[M*N], B[M*N], A_t[N*M], B_t[N*M], result[M*N];
 
-    for(int i =  0; i < TAM; i++)
+    for(int i =  0; i < M; i++)
     {
-        for(int j = 0; j < TAM; j++)
+        for(int j = 0; j < N; j++)
         {
-            matrix_a[i][j] = rand() % 100;
-            matrix_b[i][j] = rand() % 100;
+            A[i*M+j] = (float) (rand() % 3 + 1);
+            B[i*M+j] = (float) (rand() % 3 + 1);
         }
     }
 
-    printa_matrix(matrix_a);
-    printa_matrix(matrix_b);
+    printf("A: \n");
+    printa_matrix(A);
+    printf("B: \n");
+    printa_matrix(B);
+
+    cblas_sgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans, M, N, M, 1.0f, A, M, B, N, 0.0f, result, N);
+    printf("Result: \n");
+    printa_matrix(result);
 
     return (0);
 }
