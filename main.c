@@ -51,6 +51,15 @@ int main()
     printa_(1, M, vetor);
 
     //result = A*B
+    /**************************************
+     * Parâmetros:
+     * Layout: definido pela biblioteca (vê o vetor como um matriz?)
+     * TransA: Se a matrix é transposta (CblasTrans) ou não (CblasNoTrans)
+     * M, N e K: matriz A (M x K) * matriz B (K x N) 
+     * alpha: multiplica o resultado por um escalar alpha, para ignorar multiplicar por 1
+     * 
+     **************************************
+    */
     cblas_sgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans, M, N, M, 1.0f, A, M, B, N, 0.0f, result, N);
     printf("Resultado de A*B: \n");
     printa_(M, N, result);
