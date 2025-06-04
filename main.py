@@ -35,7 +35,7 @@ def cgne(H, g, max_iter=100, tol=1e-6):
 
     for i in range(max_iter):
         Hp = H @ p
-        alpha = r @ r / (Hp @ Hp)
+        alpha = np.dot(r, r) / np.dot(Hp, Hp)
         f = f + alpha * p
         r_new = r - alpha * Hp
         erro = erro_iterativo(r_new, r)
@@ -97,7 +97,6 @@ def executar_modelo(pasta, nome_H, nome_A, nomes_g):
         print(f"CGNE: Erro final: {erros_cgne[-1]:.4e}, Iterações: {len(erros_cgne)}")
         print(f"CGNR: Erro final: {erros_cgnr[-1]:.4e}, Iterações: {len(erros_cgnr)}")
 
-        # Salvar resultado opcionalmente
         np.savetxt(os.path.join(pasta, f"resultado_CGNE_{nome_g}"), f_cgne, delimiter=',')
         np.savetxt(os.path.join(pasta, f"resultado_CGNR_{nome_g}"), f_cgnr, delimiter=',')
 
