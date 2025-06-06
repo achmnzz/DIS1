@@ -8,7 +8,7 @@ import psutil
 from reconstrucoes import cgne, cgnr, calcular_ganho_sinal
 from matplotlib import pyplot as plt
 import matplotlib
-matplotlib.use('Agg')  # Usa backend sem interface gráfica
+matplotlib.use('Agg')
 
 PASTA_DADOS = "./Dados"
 PASTA_RESULTADOS = "./Resultados"
