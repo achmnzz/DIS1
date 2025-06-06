@@ -1,4 +1,6 @@
 import numpy as np
+MAX_ITER = None
+TOL = 1e-6
 
 
 def calcular_ganho_sinal(g):
@@ -14,32 +16,37 @@ def erro_iterativo(r_novo, r_antigo):
     return np.linalg.norm(r_novo) - np.linalg.norm(r_antigo)
 
 
-def adicionar_regularizacao(H, g, fator=0.10):
-    Ht = H.T
-    lambda_reg = np.max(np.abs(Ht @ g)) * fator
-    I = np.eye(H.shape[1])
-    H_reg = np.vstack([H, np.sqrt(lambda_reg) * I])
-    g_reg = np.concatenate([g, np.zeros(H.shape[1])])
-    return H_reg, g_reg
+def calcular_fatores_regularizacao(H, g):
+    HtH = H.T @ H
+    Htg = H.T @ g
+    c = np.linalg.norm(HtH, ord=2)
+    lamb = np.max(np.abs(Htg)) * 0.10
+    return lamb, c
 
 
-def cgne(H, g, max_iter=100, tol=1e-10):
-    H, g = adicionar_regularizacao(H, g)
+def cgne(H, g, max_iter=MAX_ITER, tol=TOL):
+    N = H.shape[1]
+    if max_iter is None:
+        max_iter = 2 * N  # número de colunas vezes 2 como padrão
 
-    f = np.zeros((H.shape[1],))
+    lamb, c = calcular_fatores_regularizacao(H, g)
+
+    f = np.zeros(N)
     r = g.copy()
     p = H.T @ r
     erros = []
 
     for i in range(max_iter):
         Hp = H @ p
-        alpha = np.dot(r, r) / np.dot(Hp, Hp)
+        alpha = np.dot(r, r) / (np.dot(Hp, Hp) + lamb / c)
         f = f + alpha * p
         r_new = r - alpha * Hp
         erro = erro_iterativo(r_new, r)
         erros.append(erro)
+
         if np.linalg.norm(r_new) < tol:
             break
+
         beta = np.dot(r_new, r_new) / np.dot(r, r)
         p = H.T @ r_new + beta * p
         r = r_new
@@ -47,10 +54,14 @@ def cgne(H, g, max_iter=100, tol=1e-10):
     return f, erros, i + 1
 
 
-def cgnr(H, g, max_iter=100, tol=1e-10):
-    H, g = adicionar_regularizacao(H, g)
+def cgnr(H, g, max_iter=MAX_ITER, tol=TOL):
+    N = H.shape[1]
+    if max_iter is None:
+        max_iter = 2 * N
 
-    f = np.zeros((H.shape[1],))
+    lamb, c = calcular_fatores_regularizacao(H, g)
+
+    f = np.zeros(N)
     r = g.copy()
     z = H.T @ r
     p = z.copy()
@@ -58,13 +69,15 @@ def cgnr(H, g, max_iter=100, tol=1e-10):
 
     for i in range(max_iter):
         w = H @ p
-        alpha = np.dot(z, z) / np.dot(w, w)
+        alpha = np.dot(z, z) / (np.dot(w, w) + lamb / c)
         f = f + alpha * p
         r_new = r - alpha * w
         erro = erro_iterativo(r_new, r)
         erros.append(erro)
+
         if np.linalg.norm(r_new) < tol:
             break
+
         z_new = H.T @ r_new
         beta = np.dot(z_new, z_new) / np.dot(z, z)
         p = z_new + beta * p
@@ -72,49 +85,3 @@ def cgnr(H, g, max_iter=100, tol=1e-10):
         z = z_new
 
     return f, erros, i + 1
-
-# def cgne(H, g, max_iter=100, tol=1e-10):
-#     f = np.zeros((H.shape[1],))
-#     r = g - H @ f
-#     p = H.T @ r
-#     erros = []
-#
-#     for i in range(max_iter):
-#         Hp = H @ p
-#         alpha = np.dot(r, r) / np.dot(Hp, Hp)
-#         f = f + alpha * p
-#         r_new = r - alpha * Hp
-#         erro = erro_iterativo(r_new, r)
-#         erros.append(erro)
-#         if np.linalg.norm(r_new) < tol:
-#             break
-#         beta = np.dot(r_new, r_new) / np.dot(r, r)
-#         p = H.T @ r_new + beta * p
-#         r = r_new
-#
-#     return f, erros, i + 1
-#
-#
-# def cgnr(H, g, max_iter=100, tol=1e-10):
-#     f = np.zeros((H.shape[1],))
-#     r = g - H @ f
-#     z = H.T @ r
-#     p = z.copy()
-#     erros = []
-#
-#     for i in range(max_iter):
-#         w = H @ p
-#         alpha = np.dot(z, z) / np.dot(w, w)
-#         f = f + alpha * p
-#         r_new = r - alpha * w
-#         erro = erro_iterativo(r_new, r)
-#         erros.append(erro)
-#         if np.linalg.norm(r_new) < tol:
-#             break
-#         z_new = H.T @ r_new
-#         beta = np.dot(z_new, z_new) / np.dot(z, z)
-#         p = z_new + beta * p
-#         r = r_new
-#         z = z_new
-#
-#     return f, erros, i + 1
