@@ -7,8 +7,8 @@ from datetime import datetime
 import psutil
 from reconstrucoes import cgne, cgnr
 
-PASTA_DADOS = "./Dados"
-PASTA_RESULTADOS = "./Resultados"
+PASTA_DADOS = ".\Dados"
+PASTA_RESULTADOS = ".\Resultados"
 os.makedirs(PASTA_RESULTADOS, exist_ok=True)
 
 
