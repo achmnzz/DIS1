@@ -5,7 +5,10 @@ import os
 import numpy as np
 from datetime import datetime
 import psutil
-from reconstrucoes import cgne, cgnr
+from reconstrucoes import cgne, cgnr, calcular_ganho_sinal
+from matplotlib import pyplot as plt
+import matplotlib
+matplotlib.use('Agg')
 
 PASTA_DADOS = ".\Dados"
 PASTA_RESULTADOS = ".\Resultados"
@@ -16,27 +19,25 @@ def carregar_csv(caminho):
     return np.loadtxt(caminho, delimiter=',')
 
 
-def calcular_ganho_sinal(g):
-    g = np.atleast_2d(g)
-    if g.shape[0] == 1:
-        g = g.T
-    S, N = g.shape
-    ganho = np.array([100 + (1/20) * (l+1)**1.5 for l in range(S)]).reshape(S, 1)
-    return g * ganho
-
-
 def tratar_cliente(conexao, endereco):
-    dados_recebidos = conexao.recv(8192).decode('utf-8')
-    requisicao = json.loads(dados_recebidos)
+    dados_recebidos = b""
+    while True:
+        parte = conexao.recv(4096)
+        if not parte:
+            break
+        dados_recebidos += parte
+    requisicao = json.loads(dados_recebidos.decode('utf-8'))
+    conexao.close()
     usuario = requisicao['usuario']
     algoritmo = requisicao['algoritmo']
     arquivo_H = requisicao['arquivo_H']
     arquivo_g = requisicao['arquivo_g']
+    valores_g = requisicao['valores_g']
 
     print(f"Reconstrução recebida de {usuario} usando {algoritmo}...")
 
     H = carregar_csv(os.path.join(PASTA_DADOS, arquivo_H))
-    g = carregar_csv(os.path.join(PASTA_DADOS, arquivo_g))
+    g = np.array(valores_g)
     g_gain = calcular_ganho_sinal(g).flatten()
 
     inicio = datetime.now()
@@ -48,8 +49,19 @@ def tratar_cliente(conexao, endereco):
 
     fim = datetime.now()
 
-    resultado_path = os.path.join(PASTA_RESULTADOS, f"recon_{usuario}_{algoritmo}_{arquivo_g}.csv")
-    np.savetxt(resultado_path, f, delimiter=',')
+    lado = int(np.sqrt(len(f)))
+    imagem = f.reshape((lado, lado))
+    imagem -= imagem.min()
+    if imagem.max() != 0:
+        imagem /= imagem.max()
+
+    fig, ax = plt.subplots()
+    ax.axis('off')
+    ax.imshow(imagem, cmap='gray', vmin=0, vmax=1)
+
+    resultado_path = os.path.join(PASTA_RESULTADOS, f"recon_{usuario}_{algoritmo}_{arquivo_g.replace('.csv','')}.png")
+    plt.savefig(resultado_path, bbox_inches='tight', pad_inches=0)
+    plt.close()
 
     log_info = {
         "usuario": usuario,
@@ -66,11 +78,10 @@ def tratar_cliente(conexao, endereco):
         "arquivo_saida": resultado_path
     }
 
-    with open(os.path.join(PASTA_RESULTADOS, f"log_{usuario}_{arquivo_g}.json"), 'w') as log_file:
+    with open(os.path.join(PASTA_RESULTADOS, f"log_{usuario}_{arquivo_g.replace('.csv','')}.json"), 'w') as log_file:
         json.dump(log_info, log_file, indent=2)
 
     print(f"Reconstrução concluída para {usuario}. Resultado salvo.")
-    conexao.close()
 
 
 def iniciar_servidor(host='localhost', porta=5000):
