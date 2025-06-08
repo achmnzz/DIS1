@@ -8,10 +8,11 @@ porta = 5000
 
 usuario = f"usuario_{random.randint(1, 100)}"
 algoritmo = random.choice(["cgne", "cgnr"])
-arquivo_H = "H-2.csv"
+arquivo_H = "H-1.csv"
 # arquivo_H = random.choice(["H-1.csv", "H-2.csv"])
 if arquivo_H == "H-1.csv":
-    arquivo_g = random.choice(["g-60x60-1.csv", "g-60x60-2.csv", "A-60x60-1.csv"])
+    arquivo_g = random.choice(["g-60x60-2.csv"])
+    # arquivo_g = random.choice(["g-60x60-1.csv", "g-60x60-2.csv", "A-60x60-1.csv"])
 else:
     arquivo_g = random.choice(["g-30x30-1.csv", "g-30x30-2.csv", "A-30x30-1.csv"])
 

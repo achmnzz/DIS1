@@ -5,11 +5,13 @@ import os
 import numpy as np
 from datetime import datetime
 import psutil
+import math
 from reconstrucoes import cgne, cgnr, calcular_ganho_sinal
 from matplotlib import pyplot as plt
 import matplotlib
 matplotlib.use('Agg')
 
+THRESHOLD = 0.8
 PASTA_DADOS = "./Dados"
 PASTA_RESULTADOS = "./Resultados"
 os.makedirs(PASTA_RESULTADOS, exist_ok=True)
@@ -51,9 +53,18 @@ def tratar_cliente(conexao, endereco):
 
     lado = int(np.sqrt(len(f)))
     imagem = f.reshape((lado, lado))
+
+    # imagem -= imagem.min()
+    # if arquivo_H == "H-1.csv":
+    #     imagem += 1
+    #     imagem = np.log(imagem)
+    # else:
+    imagem = abs(imagem)
+
     imagem -= imagem.min()
     if imagem.max() != 0:
         imagem /= imagem.max()
+    imagem = imagem.T
 
     fig, ax = plt.subplots()
     ax.axis('off')

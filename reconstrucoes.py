@@ -1,5 +1,5 @@
 import numpy as np
-MAX_ITER = None
+MAX_ITER = 100
 TOL = 1e-6
 
 
