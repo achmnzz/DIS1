@@ -1,5 +1,5 @@
 import numpy as np
-MAX_ITER = 100
+MAX_ITER = 20
 TOL = 1e-6
 
 
@@ -26,9 +26,6 @@ def calcular_fatores_regularizacao(H, g):
 
 def cgne(H, g, max_iter=MAX_ITER, tol=TOL):
     N = H.shape[1]
-    if max_iter is None:
-        max_iter = 2 * N  # número de colunas vezes 2 como padrão
-
     lamb, c = calcular_fatores_regularizacao(H, g)
 
     f = np.zeros(N)
@@ -56,9 +53,6 @@ def cgne(H, g, max_iter=MAX_ITER, tol=TOL):
 
 def cgnr(H, g, max_iter=MAX_ITER, tol=TOL):
     N = H.shape[1]
-    if max_iter is None:
-        max_iter = 2 * N
-
     lamb, c = calcular_fatores_regularizacao(H, g)
 
     f = np.zeros(N)
