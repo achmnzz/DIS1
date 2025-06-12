@@ -17,22 +17,6 @@ def calcular_ganho_sinal(g):
 def erro_iterativo(r_novo, r_antigo):
     return np.linalg.norm(r_novo) - np.linalg.norm(r_antigo)
 
-<<<<<<< HEAD
-# H: matriz (tamanho m x n)
-# g: vetor (tamanho m)
-# max_iter: número máximo de iterações 
-# tol: tolerância para o critério de parada
-# H @ f: multiplicaçã0 da matriz H pelo vetor f
-def cgne(H, g, max_iter=100, tol=1e-10):
-    f = np.zeros((H.shape[1],)) # cria o vetor f com zeros, com comprimento igual ao número de colunas de H, começa a busca pela solução f a partir de zero
-    r = g - H @ f
-    p = H.T @ r # multiplicando a transposta de H (tamanho m x n) por r (tamanho m) obtém-se um vetor de tamanho n, que será a direção inicial
-    erros = [] # lista que guarda, a cada iteração, o valor retornado por erro_iterativo (diferença das normas dos resíduos)
-
-    for i in range(max_iter):
-        Hp = H @ p # vetor de tamanho m, usado para computar o alpha
-        alpha = np.dot(r, r) / np.dot(Hp, Hp)
-=======
 
 def calcular_fatores_regularizacao(H, g):
     HtH = H.T @ H
@@ -57,7 +41,6 @@ def cgne(H, g, max_iter=MAX_ITER, tol=TOL):
     for i in range(max_iter):
         Hp = H @ p
         alpha = np.dot(r, r) / (np.dot(Hp, Hp) + lamb / c)
->>>>>>> 49f1027b61d68eedf6612227c9385999170efab7
         f = f + alpha * p
         r_new = r - alpha * Hp
         erro = erro_iterativo(r_new, r)
