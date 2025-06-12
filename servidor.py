@@ -51,9 +51,14 @@ def tratar_cliente(conexao, endereco):
 
     lado = int(np.sqrt(len(f)))
     imagem = f.reshape((lado, lado))
-    imagem -= imagem.min()
+    if arquivo_H == "H-1.csv":
+        imagem = np.log1p(np.abs(imagem))
+    else:
+        imagem = np.abs(imagem)
+
     if imagem.max() != 0:
         imagem /= imagem.max()
+    imagem = imagem.T
 
     fig, ax = plt.subplots()
     ax.axis('off')
