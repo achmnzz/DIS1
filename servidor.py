@@ -8,6 +8,7 @@ import matplotlib
 import socket
 import threading
 import queue
+import time
 
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime
@@ -15,7 +16,10 @@ from reconstrucoes import cgne, cgnr, calcular_ganho_sinal
 from matplotlib import pyplot as plt
 
 # Número máximo de threads simultâneas
-MAX_WORKERS = 2
+MAX_WORKERS = 5
+
+# limite de uso de RAM em %
+MEMORY_THRESHOLD = 45
 
 # Diretórios
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -33,6 +37,10 @@ matplotlib.use('Agg')
 # Cria a pasta de resultados caso não exista
 os.makedirs(PASTA_RESULTADOS, exist_ok=True)
 
+def monitorar_memoria():
+    """Retorna True se o uso de memória estiver abaixo do limite"""
+    uso_memoria = psutil.virtual_memory().percent
+    return uso_memoria < MEMORY_THRESHOLD
 
 def carregar_csv(caminho):
     return np.loadtxt(caminho, delimiter=',')
@@ -124,7 +132,7 @@ def salvar_imagem(imagem, usuario, algoritmo, arquivo_g):
 
 
 def salvar_log(usuario, algoritmo, arquivo_H, arquivo_g, iteracoes, inicio, fim, tamanho, resultado_path):
-    log_info = {
+    log_json = {
         "usuario": usuario,
         "algoritmo": algoritmo,
         "arquivo_H": arquivo_H,
@@ -141,7 +149,7 @@ def salvar_log(usuario, algoritmo, arquivo_H, arquivo_g, iteracoes, inicio, fim,
 
     log_path = os.path.join(PASTA_RESULTADOS, f"log_{usuario}_{arquivo_g.replace('.csv', '')}.json")
     with open(log_path, 'w') as log_file:
-        json.dump(log_info, log_file, indent=2)
+        json.dump(log_json, log_file, indent=2)
 
 
 '''Método chamado pelo processo anterior a ser executado
@@ -168,6 +176,11 @@ nesse método.
 '''
 def processar_fila(executor):
     while True:
+
+        while not monitorar_memoria():
+            print(f"[MEMÓRIA] Alta utilização de RAM. Aguardando...")
+            time.sleep(1)
+
         #Remove e retornam um item da fila
         conexao, endereco = fila_conexoes.get()
 
@@ -178,10 +191,6 @@ def processar_fila(executor):
         fila_conexoes.task_done()
 
 
-'''Servidor
-
-Recebe as conexões e adiciona na fila de processamento
-'''
 def iniciar_servidor(host='localhost', porta=5000):
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as servidor:
         servidor.bind((host, porta))
@@ -207,3 +216,4 @@ def iniciar_servidor(host='localhost', porta=5000):
 
 if __name__ == "__main__":
     iniciar_servidor()
+
