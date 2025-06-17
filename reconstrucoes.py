@@ -11,7 +11,9 @@ def calcular_ganho_sinal(g):
     ganho = np.array([100 + (1/20) * l * np.sqrt(l) for l in range(1, S+1)]).reshape(S, 1)
     return g * ganho
 
-
+# r: “resíduo” (diferença entre g e H@f)
+# np.linalg.norm: calcula a norma euclidiana do vetor
+# durante a convergência, esperamos que ‖r_novo‖ < ‖r_antigo‖, então esse valor tende a ser negativo (o resíduo diminui)
 def erro_iterativo(r_novo, r_antigo):
     return np.linalg.norm(r_novo) - np.linalg.norm(r_antigo)
 

@@ -3,3 +3,4 @@
 recon*
 log*
 H*.csv
+/__pycache__
