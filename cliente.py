@@ -77,4 +77,3 @@ with open(relatorio_path, 'w') as f:
     json.dump(relatorio, f, indent=2)
 
 print(f"[RELATÓRIO] Salvo em: {relatorio_path}")
-

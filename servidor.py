@@ -1,5 +1,3 @@
-import socket
-import threading
 import json
 import os
 import numpy as np
@@ -19,7 +17,7 @@ from matplotlib import pyplot as plt
 MAX_WORKERS = 5
 
 # limite de uso de RAM em %
-MEMORY_THRESHOLD = 45
+MEMORY_THRESHOLD = 95
 
 # Diretórios
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -37,10 +35,12 @@ matplotlib.use('Agg')
 # Cria a pasta de resultados caso não exista
 os.makedirs(PASTA_RESULTADOS, exist_ok=True)
 
+
 def monitorar_memoria():
     """Retorna True se o uso de memória estiver abaixo do limite"""
     uso_memoria = psutil.virtual_memory().percent
     return uso_memoria < MEMORY_THRESHOLD
+
 
 def carregar_csv(caminho):
     return np.loadtxt(caminho, delimiter=',')
@@ -91,25 +91,17 @@ def preparar_dados(arquivo_H, valores_g):
 
 def reconstruir_imagem(H, g_gain, algoritmo, arquivo_H):
     inicio = datetime.now()
-
     if algoritmo == "cgne":
         f, erros, iteracoes = cgne(H, g_gain)
     else:
         f, erros, iteracoes = cgnr(H, g_gain)
-
     fim = datetime.now()
 
     lado = int(np.sqrt(len(f)))
     imagem = f.reshape((lado, lado))
-
-    if arquivo_H == "H-1.csv":
-        imagem = np.log1p(np.abs(imagem))
-    else:
-        imagem = np.abs(imagem)
-
+    imagem = np.abs(imagem)
     if imagem.max() != 0:
         imagem /= imagem.max()
-
     imagem = imagem.T
 
     return imagem, iteracoes, inicio, fim
@@ -156,6 +148,8 @@ def salvar_log(usuario, algoritmo, arquivo_H, arquivo_g, iteracoes, inicio, fim,
 
 Executa executar_algoritmo com os dados da requisição
 '''
+
+
 def tratar_cliente(conexao, endereco):
     try:
         print(f"[PROCESSANDO] Conexão de {endereco}")
@@ -174,6 +168,8 @@ def tratar_cliente(conexao, endereco):
 Todas as requisições feitas entram na fila "fila_conexoes", que são processadas 
 nesse método.
 '''
+
+
 def processar_fila(executor):
     while True:
 
@@ -216,4 +212,3 @@ def iniciar_servidor(host='localhost', porta=5000):
 
 if __name__ == "__main__":
     iniciar_servidor()
-
