@@ -98,11 +98,13 @@ def reconstruir_imagem(H, g_gain, algoritmo, arquivo_H):
     fim = datetime.now()
 
     lado = int(np.sqrt(len(f)))
-    imagem = f.reshape((lado, lado))
-    imagem = np.abs(imagem)
+    imagem = np.abs(f).reshape((lado, lado), order='F')
+    if arquivo_H == "H-1.csv":
+        if imagem.max() != 0:
+            imagem /= imagem.max()
+        imagem = np.log1p(imagem)
     if imagem.max() != 0:
         imagem /= imagem.max()
-    imagem = imagem.T
 
     return imagem, iteracoes, inicio, fim
 
