@@ -1,5 +1,5 @@
 import numpy as np
-MAX_ITER = 20000
+MAX_ITER = 20
 TOL = 1e-4
 
 
