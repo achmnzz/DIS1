@@ -37,8 +37,7 @@ def gerar_requisicao(usuario: str):
     Gera o payload JSON usando um usuário fixo.
     """
     algoritmo = random.choice(["cgne", "cgnr"])
-    # arquivo_H = random.choice(["H-1.csv", "H-2.csv"])
-    arquivo_H = "H-2.csv"
+    arquivo_H = random.choice(["H-1.csv", "H-2.csv"])
 
     if arquivo_H == "H-1.csv":
         arquivo_g = random.choice(["g-60x60-1.csv", "g-60x60-2.csv", "A-60x60-1.csv"])
