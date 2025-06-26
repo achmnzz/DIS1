@@ -105,17 +105,15 @@ def reconstruir_imagem(H, g_gain, algoritmo):
 
 def processar_imagem(f, arquivo_H):
     lado = int(np.sqrt(len(f)))
-    imagem = f.reshape((lado, lado))
-
+    imagem = np.abs(f).reshape((lado, lado), order='F')
     if arquivo_H == "H-1.csv":
-        imagem = np.log1p(np.abs(imagem))
-    else:
-        imagem = np.abs(imagem)
-
+        if imagem.max() != 0:
+            imagem /= imagem.max()
+        imagem = np.log1p(imagem)
     if imagem.max() != 0:
         imagem /= imagem.max()
 
-    return imagem.T
+    return imagem
 
 
 def salvar_imagem(imagem, dados):
@@ -221,6 +219,7 @@ async def worker():
         requisicoes.task_done()
 
 
+# noinspection PyAsyncCall,PyShadowingNames
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """

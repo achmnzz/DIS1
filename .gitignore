@@ -4,3 +4,5 @@ recon*
 log*
 H*.csv
 /__pycache__
+/Processamento de Imagens/
+/Resultados/
