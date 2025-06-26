@@ -36,7 +36,7 @@ jobs = {}
 
 # Memória limite
 MEMORY_THRESHOLD = 94
-MAX_WORKERS = 8
+MAX_WORKERS = 4
 
 # Utilizando Anti-Grain Geometry para não precisar de uma GUI (interface gráfica)
 matplotlib.use('Agg')
@@ -116,8 +116,8 @@ def processar_imagem(f, arquivo_H):
     return imagem
 
 
-def salvar_imagem(imagem, dados):
-    resultado_path = PASTA_RESULTADOS / f"recon_{dados.usuario}_{dados.algoritmo}_{dados.arquivo_g.replace('.csv', '')}.png"
+def salvar_imagem(imagem, dados, job_id):
+    resultado_path = PASTA_RESULTADOS / f"recon_{dados.usuario}_{job_id}_{dados.algoritmo}_{dados.arquivo_g.replace('.csv', '')}.png"
     
     fig, ax = plt.subplots()
     ax.axis('off')
@@ -171,7 +171,7 @@ def processamento(dados: RequisicaoReconstrucao, job_id: str):
         fim = datetime.now()
 
         imagem = processar_imagem(f, dados.arquivo_H)
-        resultado_path = salvar_imagem(imagem, dados)
+        resultado_path = salvar_imagem(imagem, dados, job_id)
 
         salvar_log(dados, iteracoes, inicio, fim, resultado_path, job_id)
 
