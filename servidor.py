@@ -41,10 +41,12 @@ MAX_WORKERS = 4
 # Utilizando Anti-Grain Geometry para não precisar de uma GUI (interface gráfica)
 matplotlib.use('Agg')
 
+
 # Arquivos
 class Consts:
     ARQ_H1 = "H-1.csv"
     ARQ_H2 = "H-2.csv"
+
 
 # Leitura antecipada de arquivos
 logger.info(f"Carregando arquivos H...")
@@ -53,6 +55,7 @@ logger.info(f"Arquivo H1 carregado")
 H2 = np.loadtxt(PASTA_DADOS / Consts.ARQ_H2, delimiter=",", dtype=np.float64)
 logger.info(f"Arquivo H2 carregado")
 
+
 # Modelo da requisição
 class RequisicaoReconstrucao(BaseModel):
     usuario: str
@@ -60,6 +63,7 @@ class RequisicaoReconstrucao(BaseModel):
     arquivo_H: str
     arquivo_g: str
     valores_g: list[float]
+
 
 class LogItem(BaseModel):
     job_id: str
@@ -74,7 +78,9 @@ class LogItem(BaseModel):
     memoria: float
     saida: str
 
+
 logs_por_usuario: dict[str, list[LogItem]] = defaultdict(list)
+
 
 # Função de processamento
 def aguardar_memoria(job_id):
@@ -92,7 +98,7 @@ def carregar_dados(dados):
         case Consts.ARQ_H1:
             return H1, g_gain
         case Consts.ARQ_H2:
-            return H2,g_gain
+            return H2, g_gain
 
 
 def reconstruir_imagem(H, g_gain, algoritmo):
@@ -191,6 +197,7 @@ def processamento(dados: RequisicaoReconstrucao, job_id: str):
 def monitorar_memoria():
     return psutil.virtual_memory().percent < MEMORY_THRESHOLD
 
+
 async def worker():
     """
     Worker assíncrono que consome a fila de requisições e delega o processamento
@@ -246,6 +253,8 @@ app = FastAPI(lifespan=lifespan)
 #----------------------- Endpoints ------------------------------------- #
 
 # Endpoint para submeter job
+
+
 @app.post("/reconstruir")
 async def reconstruir(dados: RequisicaoReconstrucao):
     """
