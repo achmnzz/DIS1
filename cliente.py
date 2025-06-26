@@ -17,7 +17,7 @@ host = 'localhost'
 porta = 8000
 url = f"http://{host}:{porta}/reconstruir"
 
-# Parâmetros do teste
+# Parâmetros para teste
 NUM_CLIENTES = 3
 REQUISICOES_POR_CLIENTE = 10
 INTERVALO_MIN = 1.0
@@ -33,9 +33,7 @@ cpus = []
 inicio = datetime.now()
 
 def gerar_requisicao(usuario: str):
-    """
-    Gera o payload JSON usando um usuário fixo.
-    """
+    # Gera o payload JSON usando um usuário fixo
     algoritmo = random.choice(["cgne", "cgnr"])
     arquivo_H = random.choice(["H-1.csv", "H-2.csv"])
 
@@ -56,9 +54,7 @@ def gerar_requisicao(usuario: str):
     }, arquivo_g
 
 async def enviar_requisicao(usuario: str, req_id: int, client: httpx.AsyncClient):
-    """
-    Envia uma requisição para o servidor e registra tempo de espera.
-    """
+    # Envia uma requisição para o servidor e registra tempo de espera
     mensagem, arquivo_g = gerar_requisicao(usuario)
     try:
         resposta = await client.post(url, json=mensagem)
@@ -75,9 +71,7 @@ async def enviar_requisicao(usuario: str, req_id: int, client: httpx.AsyncClient
     await asyncio.sleep(random.uniform(INTERVALO_MIN, INTERVALO_MAX))
 
 async def cliente_simulado(usuario: str, client: httpx.AsyncClient):
-    """
-    Cada cliente envia várias requisições sequencialmente, aguardando entre elas.
-    """
+    # Cada cliente envia várias requisições sequencialmente, aguardando entre elas
     for i in range(1, REQUISICOES_POR_CLIENTE + 1):
         await enviar_requisicao(usuario, i, client)
 

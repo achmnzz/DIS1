@@ -13,6 +13,8 @@ from fastapi import FastAPI
 from matplotlib import pyplot as plt
 from pydantic import BaseModel
 from reconstrucoes import cgne, cgnr, calcular_ganho_sinal
+from typing import Literal
+from collections import defaultdict
 
 # Logging
 logging.basicConfig(level=logging.INFO)
@@ -33,11 +35,23 @@ requisicoes = asyncio.Queue()
 jobs = {}
 
 # Memória limite
-MEMORY_THRESHOLD = 90
+MEMORY_THRESHOLD = 94
 MAX_WORKERS = 8
 
 # Utilizando Anti-Grain Geometry para não precisar de uma GUI (interface gráfica)
 matplotlib.use('Agg')
+
+# Arquivos
+class Consts:
+    ARQ_H1 = "H-1.csv"
+    ARQ_H2 = "H-2.csv"
+
+# Leitura antecipada de arquivos
+logger.info(f"Carregando arquivos H...")
+H1 = np.loadtxt(PASTA_DADOS / Consts.ARQ_H1, delimiter=",", dtype=np.float64)
+logger.info(f"Arquivo H1 carregado")
+H2 = np.loadtxt(PASTA_DADOS / Consts.ARQ_H2, delimiter=",", dtype=np.float64)
+logger.info(f"Arquivo H2 carregado")
 
 # Modelo da requisição
 class RequisicaoReconstrucao(BaseModel):
@@ -47,8 +61,22 @@ class RequisicaoReconstrucao(BaseModel):
     arquivo_g: str
     valores_g: list[float]
 
+class LogItem(BaseModel):
+    job_id: str
+    algoritmo: Literal["cgne", "cgnr"]
+    arquivo_H: str
+    arquivo_g: str
+    iteracoes: int
+    inicio: str
+    fim: str
+    duracao: float
+    cpu: float
+    memoria: float
+    saida: str
 
-# Função de processamento pesado
+logs_por_usuario: dict[str, list[LogItem]] = defaultdict(list)
+
+# Função de processamento
 def aguardar_memoria(job_id):
     while not monitorar_memoria():
         uso = psutil.virtual_memory().percent
@@ -58,10 +86,13 @@ def aguardar_memoria(job_id):
 
 
 def carregar_dados(dados):
-    H = np.loadtxt(PASTA_DADOS / dados.arquivo_H, delimiter=",", dtype=np.float64)
     g = np.array(dados.valores_g, dtype=np.float64)
     g_gain = calcular_ganho_sinal(g).flatten().astype(np.float64)
-    return H, g_gain
+    match dados.arquivo_H:
+        case Consts.ARQ_H1:
+            return H1, g_gain
+        case Consts.ARQ_H2:
+            return H2,g_gain
 
 
 def reconstruir_imagem(H, g_gain, algoritmo):
@@ -101,23 +132,28 @@ def salvar_imagem(imagem, dados):
 
 
 def salvar_log(dados, iteracoes, inicio, fim, resultado_path, job_id):
-    log = {
-        "usuario": dados.usuario,
-        "algoritmo": dados.algoritmo,
-        "arquivo_H": dados.arquivo_H,
-        "arquivo_g": dados.arquivo_g,
-        "iteracoes": iteracoes,
-        "inicio": str(inicio),
-        "fim": str(fim),
-        "duracao": (fim - inicio).total_seconds(),
-        "cpu": psutil.cpu_percent(),
-        "memoria": psutil.virtual_memory().percent,
-        "saida": str(resultado_path)
-    }
+    log_obj = LogItem(
+        job_id=job_id,
+        algoritmo=dados.algoritmo,
+        arquivo_H=dados.arquivo_H,
+        arquivo_g=dados.arquivo_g,
+        iteracoes=iteracoes,
+        inicio=str(inicio),
+        fim=str(fim),
+        duracao=(fim - inicio).total_seconds(),
+        cpu=psutil.cpu_percent(),
+        memoria=psutil.virtual_memory().percent,
+        saida=str(resultado_path)
+    )
 
-    log_path = PASTA_RESULTADOS / f"log_{dados.usuario}_{dados.arquivo_g.replace('.csv', '')}.json"
+    usuario = dados.usuario
+    logs_por_usuario[usuario].append(log_obj)
+
+    # Salvar em JSON
+    log_path = PASTA_RESULTADOS / f"logs_{usuario}.json"
     with open(log_path, "w") as f:
-        json.dump(log, f, indent=2)
+        # .json() converte todos os objetos Pydantic para dicionários automaticamente
+        json.dump({usuario: [log.model_dump() for log in logs_por_usuario[usuario]]}, f, indent=2)
 
     jobs[job_id]["log"] = str(log_path)
 
@@ -160,7 +196,7 @@ def monitorar_memoria():
 async def worker():
     """
     Worker assíncrono que consome a fila de requisições e delega o processamento
-    pesado para threads, mantendo o event loop livre.
+    para threads, mantendo o event loop livre.
 
     Fluxo de execução:
     ------------------
@@ -193,13 +229,12 @@ async def lifespan(app: FastAPI):
     Executa tarefas de inicialização (startup) antes de o servidor começar
     a aceitar requisições e tarefas de limpeza (shutdown) depois que o servidor
     for interrompido.
-
     """
     for _ in range(MAX_WORKERS):
         asyncio.create_task(worker())
     logger.info("Workers iniciados")
 
-    # ponto em que o servidor entra em execução
+    # Ponto em que o servidor entra em execução
     yield
 
     logger.info("Servidor finalizando...")
@@ -219,7 +254,7 @@ async def reconstruir(dados: RequisicaoReconstrucao):
 
     Parâmetros:
     -----------
-    dados : RequisicaoReconstrucao
+    dados: RequisicaoReconstrucao
         Instância do modelo Pydantic contendo:
         - usuario (str): nome ou identificador do solicitante.
         - algoritmo (str): "cgne" ou "cgnr".
@@ -228,8 +263,8 @@ async def reconstruir(dados: RequisicaoReconstrucao):
         - valores_g (list[float]): lista de valores de g já carregados em memória.
 
     Fluxo de execução:
-    ------------------
-    1. Gera um `job_id` único (UUID) para identificar a tarefa.
+    -----------
+    1. Gera um `job_id` único (uuid) para identificar a tarefa.
     2. Registra o job no dicionário `jobs` com status inicial `"na_fila"`.
     3. Enfileira a tupla `(dados, job_id)` na fila assíncrona `requisicoes`.
     4. Registra no log (`logger.info`) que o job foi adicionado à fila.
@@ -238,7 +273,7 @@ async def reconstruir(dados: RequisicaoReconstrucao):
        - `status`: `"na_fila"`, indicando que ainda não começou a processar.
 
     Retorno:
-    --------
+    -----------
     dict
         {
             "job_id": str,
@@ -247,8 +282,7 @@ async def reconstruir(dados: RequisicaoReconstrucao):
 
     Observações:
     ------------
-    - A execução efetiva da tarefa ocorre em background pelos workers,
-      garantindo que este endpoint não bloqueie o event loop.
+    - A execução efetiva da tarefa ocorre em background pelos workers, garantindo que este endpoint não bloqueie o event loop.
     """
     job_id = str(uuid.uuid4())
     jobs[job_id] = {"status": "na_fila"}
